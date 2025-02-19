@@ -1,0 +1,680 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>精品课程查询</title>
+    <!-- import Vue.js -->
+    <script src="https://unpkg.shop.jd.com/vue@2.6.14/dist/vue.min.js"></script>
+    <!-- import stylesheet -->
+    <link rel="stylesheet" href="https://unpkg.shop.jd.com/view-design@4.5.0/dist/styles/iview.css">
+    <link rel="stylesheet" href="/static/learncss.css">
+    <!-- import iView -->
+    <script src="https://unpkg.shop.jd.com/view-design@4.5.0/dist/iview.min.js"></script>
+    <script src="https://unpkg.shop.jd.com/axios@0.21.1/dist/axios.min.js"></script>
+    <script src="/static/js/js.cookie.min.js"></script>
+</head>
+<body>
+
+<div id="app">
+    <row class-name="head">
+        <i-col span="18">
+            <div class="logo">
+                <h1>精品课程查询&nbsp;&nbsp;</h1><h2>精选好平台，好课程</h2>
+            </div>
+        </i-col>
+        <i-col span="2">
+            <div class="wx">
+                <button class="sitebutton" v-if="hasLogin == 1">
+                    <img src="/static/image/avatar.png" >
+                </button>
+                <button class="sitebutton" @click="login_open" v-else>
+                    <img src="/static/image/wx_32.png" alt="">
+                </button>
+            </div>
+        </i-col>
+        <i-col span="2">
+            <div class="uinfo" v-if="hasLogin == 1">{{ suser.nickname }}</div>
+        </i-col>
+        <i-col span="2">
+            <div class="uinfo" v-if="hasLogin == 1">积分：{{ score }}</div>
+        </i-col>
+    </row>
+    <tabs class="content" @on-click="tab_click" >
+        <tab-pane label="前沿IT学习精品" name="type_it">
+            <row class-name="search">
+                <i-col span="4" class-name="scol">
+                    <i-input v-model="key1_1" placeholder="关键字1.." size="default"></i-input>
+                </i-col>
+                <i-col span="4" class-name="scol">
+                    <i-input v-model="key1_2" placeholder="关键字2.." size="default"></i-input>
+                </i-col>
+                <i-col span="4" class-name="scol">
+                    <i-input v-model="key1_3" placeholder="关键字3.." size="default" ></i-input>
+                </i-col>
+                <i-col span="8" class-name="scol">
+                    <i-select v-model="sel_ittags" placeholder="课程标签" @on-change="ittags_change" filterable multiple>
+                        <i-option v-for="item in it_tags_dict" :value="item.value" :key="item.value" >{{ item.label }}</i-option>
+                    </i-select>
+                </i-col>
+                <i-col span="1"></i-col>
+                <i-col span="3" class-name="scol">
+                    <div class="lab">
+                        <i-button type="primary" @click="it_search">查询</i-button>
+                    </div>
+                </i-col>
+            </row>
+            <row>
+                <i-col span="24">
+                    <div class="result">
+                        <i-table :columns="itresourcecolnums" :data="itresourcedata">
+                            <template slot-scope="{ row }" slot="show_name">
+                                <a :href="row.share_url" target="_blank">{{ row.show_name }}</a>
+                            </template>
+                            <template slot-scope="{ row }" slot="pwd">
+                                <span :class="row.pwdcolor">{{ row.pwd }}</span>
+                            </template>
+                            <template slot-scope="{ row, index }" slot="action">
+                                <i-button v-if="row.pwd == '支付后显示密码'"  type="warning" icon="ios-cart" size="small" style="margin-right: 5px" @click="payment(index)" title="购买"></i-button>
+                                <i-button v-if="row.pwd == '支付后显示密码'" type="success" icon="ios-link" size="small" style="margin-right: 5px" @click="exchange(index)" title="兑换"></i-button>
+                                <i-button type="info" icon="ios-list-box-outline" size="small" style="margin-right: 5px" @click="view(index)" title="查看"></i-button>
+                            </template>
+                        </i-table>
+                    </div>
+                    <div class="cpager">
+                        <Page :total="itresourcecount" :current="itcurrent" @on-change="it_page_change" page-size="25" show-total />
+                    </div>
+                </i-col>
+            </row>
+        </tab-pane>
+        <tab-pane label="精品电子书" name="type_book">
+            <row class-name="search">
+                <i-col span="4" class-name="scol">
+                    <i-input v-model="key3_1" placeholder="关键字1.." size="default"></i-input>
+                </i-col>
+                <i-col span="4" class-name="scol">
+                    <i-input v-model="key3_2" placeholder="关键字2.." size="default"></i-input>
+                </i-col>
+                <i-col span="4" class-name="scol">
+                    <i-input v-model="key3_3" placeholder="关键字3.." size="default" ></i-input>
+                </i-col>
+                <i-col span="8" class-name="scol">
+                    <i-select v-model="sel_booktags" placeholder="书籍标签" @on-change="booktags_change" filterable multiple>
+                        <i-option v-for="item in book_tags_dict" :value="item.value" :key="item.value" >{{ item.label }}</i-option>
+                    </i-select>
+                </i-col>
+                <i-col span="1"></i-col>
+                <i-col span="3" class-name="scol">
+                    <div class="lab">
+                        <i-button type="primary" @click="book_search">查询</i-button>
+                    </div>
+                </i-col>
+            </row>
+            <row>
+                <i-col span="24">
+                    <div class="result">
+                        <i-table :columns="bookresourcecolnums" :data="bookresourcedata">
+                            <template slot-scope="{ row }" slot="show_name">
+                                <a :href="row.share_url" target="_blank">{{ row.show_name }}</a>
+                            </template>
+                            <template slot-scope="{ row }" slot="pwd">
+                                <span :class="row.pwdcolor">{{ row.pwd }}</span>
+                            </template>
+                        </i-table>
+                    </div>
+                    <div class="cpager">
+                        <Page :total="bookresourcecount" :current="bookcurrent" @on-change="book_page_change" page-size="25" show-total />
+                    </div>
+                </i-col>
+            </row>
+        </tab-pane>
+        <tab-pane label="精品知识付费" name="type_knowledge">
+            <row class-name="search">
+                <i-col span="4" class-name="scol">
+                    <i-input v-model="key2_1" placeholder="关键字1.." size="default"></i-input>
+                </i-col>
+                <i-col span="4" class-name="scol">
+                    <i-input v-model="key2_2" placeholder="关键字2.." size="default"></i-input>
+                </i-col>
+                <i-col span="4" class-name="scol">
+                    <i-input v-model="key2_3" placeholder="关键字3.." size="default" ></i-input>
+                </i-col>
+                <i-col span="8" class-name="scol">
+                    <i-select v-model="sel_kltags" placeholder="课程标签" @on-change="kltags_change" filterable multiple>
+                        <i-option v-for="item in knowledge_tags_dict" :value="item.value" :key="item.value" >{{ item.label }}</i-option>
+                    </i-select>
+                </i-col>
+                <i-col span="1"></i-col>
+                <i-col span="3" class-name="scol">
+                    <div class="lab">
+                        <i-button type="primary" @click="kl_search">查询</i-button>
+                    </div>
+                </i-col>
+            </row>
+            <row>
+                <i-col span="24">
+                    <div class="result">
+                        <i-table :columns="klresourcecolnums" :data="klresourcedata">
+                            <template slot-scope="{ row }" slot="show_name">
+                                <a :href="row.share_url" target="_blank">{{ row.show_name }}</a>
+                            </template>
+                            <template slot-scope="{ row }" slot="pwd">
+                                <span :class="row.pwdcolor">{{ row.pwd }}</span>
+                            </template>
+                            <template slot-scope="{ row, index }" slot="action">
+                                <i-button v-if="row.pwd == '支付后显示密码'"  type="warning" icon="ios-cart" size="small" style="margin-right: 5px" @click="payment(index)" title="购买"></i-button>
+                                <i-button v-if="row.pwd == '支付后显示密码'" type="success" icon="ios-link" size="small" style="margin-right: 5px" @click="exchange(index)" title="兑换"></i-button>
+                                <i-button type="info" icon="ios-list-box-outline" size="small" style="margin-right: 5px" @click="view(index)" title="查看"></i-button>
+                            </template>
+                        </i-table>
+                    </div>
+                    <div class="cpager">
+                        <Page :total="klresourcecount" :current="klcurrent" @on-change="kl_page_change" page-size="25" show-total />
+                    </div>
+                </i-col>
+            </row>
+        </tab-pane>
+        <tab-pane label="已购资源" name="my">
+            <div v-if="hasLogin == 1">
+                <row>
+                    <i-col span="24">
+                        <div class="result">
+                            <i-table :columns="myresourcecolnums" :data="myresourcedata">
+                                <template slot-scope="{ row }" slot="show_name">
+                                    <a :href="row.share_url" target="_blank">{{ row.show_name }}</a>
+                                </template>
+                                <template slot-scope="{ row }" slot="pwd">
+                                    <span class="textred">{{ row.pwd }}</span>
+                                </template>
+                            </i-table>
+                        </div>
+                        <div class="cpager">
+                            <Page :total="myresourcecount" :current="mycurrent" @on-change="my_page_change" page-size="10" show-total />
+                        </div>
+                    </i-col>
+                </row>
+            </div>
+            <div class="afterlogin" v-else="hasLogin == 0">
+                登录后显示
+            </div>
+        </tab-pane>
+        <tab-pane label="返回" name="backto"></tab-pane>
+    </tabs>
+    <Spin fix v-show="isglobalshow">
+        <Icon type="ios-loading" size="30" class="spin-icon-load"></Icon>
+        <div>加载中...</div>
+    </Spin>
+    <!-- 界面弹出层 -->
+
+    <Modal
+            title="请登录"
+            v-model="loginshow" footer-hide="true"
+            :mask-closable="false">
+        <Spin fix v-show="isSpinShow">
+            <Icon type="ios-loading" size="30" class="spin-icon-load"></Icon>
+            <div>Loading...</div>
+        </Spin>
+        <div class="wxhead">
+            <div class="info">
+                扫描二维码·关注登录
+            </div>
+            <div class="gzh">
+                <img v-bind:src="qr_code_url" alt="">
+            </div>
+            <div class="logincountdown">
+                二维码在{{ logincountdown }}秒内有效
+            </div>
+        </div>
+    </Modal>
+
+    <Modal
+            title="内容详情"
+            v-model="viewshow" footer-hide="true"
+            :mask-closable="false">
+        <Spin fix v-show="isSpinShow">
+            <Icon type="ios-loading" size="30" class="spin-icon-load"></Icon>
+            <div>Loading...</div>
+        </Spin>
+        <div class="detail">
+            <ul>
+                <li v-for="content in contentlist">
+                    {{ content }}
+                </li>
+            </ul>
+        </div>
+    </Modal>
+    <Modal
+            title="扫码支付"
+            v-model="payshow" footer-hide="true"
+            :mask-closable="false">
+        <div class="payment">
+            <div class="info">
+                {{ payinfo }}
+            </div>
+            <div class="qrpay">
+                <img v-bind:src="qr_payment_url" alt="">
+            </div>
+            <div class="paycountdownmsg">
+                {{ paycountdownmsg }}
+            </div>
+            <div class="paytip">
+                如果长按无法识别，请扫码支付!
+            </div>
+        </div>
+    </Modal>
+
+    <Modal
+            title="提示"
+            v-model="tipsshow" :footer-hide="tipbtnhidde"
+            :mask-closable="false"
+            @on-ok="do_exchange">
+        <p>
+            {{ tipmessage }}
+        </p>
+    </Modal>
+</div>
+
+</body>
+<script>
+    var vm = new Vue({
+        el: '#app',
+        data:{
+
+            /*{public*/
+            learn_type:'type_it',
+            isglobalshow:false,
+            /*d*/
+            loginshow:false,
+            tipsshow:false,
+            tipbtnhidde:true,
+            tipmessage:'',
+            hasLogin:0 == 1,
+            userType:-1,
+            score:0,
+            suser:{},
+            logincountdown:0,
+            qr_code_url:'',
+            tts:0,
+            ttn:0,
+            sid:'',
+            isSpinShow:false,
+            viewshow:false,
+            contentlist:'',
+            /*扫码支付*/
+            payshow:false,
+            payinfo:'',
+            paycountdownmsg:'',
+            qr_payment_url:'',
+            /*兑换*/
+            exlrid:'',
+            costscore:0,
+            /*public}*/
+            /*IT*/
+            key1_1:'',
+            key1_2:'',
+            key1_3:'',
+            sel_ittags:[],
+            itresourcecolnums:[],
+            itresourcedata:[],
+            itresourcecount:0,
+            itcurrent:1,
+            it_tags_dict:[],
+            /*knowledge*/
+            key2_1:'',
+            key2_2:'',
+            key2_3:'',
+            sel_kltags:[],
+            klresourcecolnums:[],
+            klresourcedata:[],
+            klresourcecount:0,
+            klcurrent:1,
+            knowledge_tags_dict:[],
+            /*my*/
+            myresourcecolnums:[],
+            myresourcedata:[],
+            myresourcecount:0,
+            mycurrent:1,
+            /*book*/
+            key3_1:'',
+            key3_2:'',
+            key3_3:'',
+            sel_booktags:[],
+            bookresourcecolnums:[],
+            bookresourcedata:[],
+            bookresourcecount:0,
+            bookcurrent:1,
+            book_tags_dict:[],
+        },
+        methods:{
+            /*public*/
+            tab_click:function(name){
+                this.learn_type = name;
+                if(name=="type_it" && this.itresourcedata.length == 0){
+                    this.get_it();
+                }else if(name=='my' && this.myresourcedata.length == 0){
+                    this.get_my();
+                }else if(name=='type_knowledge' && this.klresourcedata.length == 0){
+                    this.get_kl();
+                }else if (name=='type_book' && this.klresourcedata.length == 0){
+                    this.get_book();
+                }else if(name=='backto'){
+                    window.location.href = '/';
+                }
+            },
+            tag_init:function(){
+                axios({
+                    method: 'get',
+                    url:'/learn/api/tags/',
+                }).then((response)=>{
+                    this.it_tags_dict = response.data.it_tags_dict;
+                    this.knowledge_tags_dict = response.data.knowledge_tags_dict;
+                    this.book_tags_dict = response.data.book_tags_dict;
+                });
+            },
+            login_open :function () {
+                this.isSpinShow = true;
+                axios({
+                    method: 'get',
+                    url: '/api/loginQRCode/',
+                }).then((response)=>{
+                    this.isSpinShow = false;
+                    this.qr_code_url = response.data.qr_url;
+                    this.tts = response.data.tts;
+                    this.ttn = response.data.ttn;
+                    this.sid = response.data.sid;
+                    this.logincountdown = 300;
+                    Cookies.set('tts',this.tts);
+                    Cookies.set('ttn',this.ttn);
+                    Cookies.set('sid',this.sid);
+                    var checkloinVar = setInterval(()=>{
+                        axios({
+                            method: 'get',
+                            url:'/api/checklogin/',
+                            params:{sid:this.sid}
+                        }).then((response)=>{
+                            if(response.data.status == 1){
+                                Cookies.setd
+                                Cookies.set('suid',response.data.suser.suid);
+                                Cookies.set('token',response.data.suser.token);
+                                this.loginshow = false;
+                                clearInterval(checkloinVar);
+                                window.location.href = '/learn/';
+                            }
+                            if(!this.loginshow){
+                                clearInterval(checkloinVar);
+                            }
+                        });
+                        this.logincountdown = this.logincountdown - 1;
+                    },1000);
+                });
+                this.loginshow = true;
+            },
+            exchange:function(index){
+                //兑换
+                var lrid = '';
+                if(this.learn_type == 'type_it') {
+                    lrid = this.itresourcedata[index].lrid;
+                }
+                else {
+                    lrid = this.klresourcedata[index].lrid;
+                }
+                this.costscore = this.itresourcedata[index].costscore;
+                this.exlrid =  lrid;
+                if(this.hasLogin){
+                    this.tipsshow = true;
+                    if(this.score >= this.costscore) {
+                        this.tipmessage = '你的当前拥有积分：' + this.score + '，需花费积分：' + this.costscore + '，是否继续兑换？'
+                        this.tipbtnhidde = false;
+                    }else{
+                        this.tipmessage = '你的当前拥有积分：' + this.score + '，需花费积分：' + this.costscore + '，你的积分不够！'
+                        this.tipbtnhidde = true;
+                    }
+                }else{
+                    this.login_open();
+                }
+            },
+            do_exchange:function(){
+                axios({
+                    method: 'post',
+                    url: '/learn/api/exchange',
+                    data: {
+                        exlrid: this.exlrid,
+                    }
+                }).then((response)=>{
+                    this.$Message['info']({
+                        background: true,
+                        content: response.data.msg
+                    });
+                    if(response.data.status == 1){
+                        this.score = this.score - this.costscore;
+                        if(this.learn_type == 'type_it'){
+                            this.get_it();
+                        }
+                        else if(this.learn_type == 'type_knowledge') {
+                            this.get_kl();
+                        }
+                    }
+                });
+            },
+            payment:function(index){
+                //支付
+                if(this.learn_type == 'type_it') {
+                    var lrid = this.itresourcedata[index].lrid;
+                }
+                else {
+                    var lrid = this.klresourcedata[index].lrid;
+                }
+                if(this.hasLogin){
+                    this.isglobalshow = true;
+                    axios({
+                        method: 'post',
+                        url: '/learn/api/payto/',
+                        data: {
+                            lrid: lrid,
+                        }
+                    }).then((response)=>{
+                        if(response.data.status != 1){
+                            this.$Message['info']({
+                                background: true,
+                                content: response.data.msg
+                            });
+                        }else{
+                            this.payinfo = '订单：' + response.data.orderdata.subject + ' 需支付'+ response.data.orderdata.price + '元';
+                            this.qr_payment_url = response.data.orderdata.qr_img;
+                            this.order_num = response.data.orderdata.order_num;
+                            this.expires_in = response.data.orderdata.expires_in;
+                            this.isglobalshow = false;
+                            this.payshow = true;
+                            var checkpayment = setInterval(()=>{
+                                var now = new Date();
+                                var d1 = now.getTime();
+                                var expires = new Date(this.expires_in);
+                                var d2 = expires.getTime();
+                                if(d2 - d1 >0){
+                                    var seconds = parseInt((d2 - d1) /1000);
+                                    this.paycountdownmsg = '订单在' + seconds + '秒内有效';
+                                }else{
+                                    this.paycountdownmsg = '订单失效';
+                                    this.qr_payment_url = '/static/image/ordercancel.png';
+                                    clearInterval(checkpayment);
+                                }
+                                axios({
+                                    method: 'get',
+                                    url:'/learn/api/paymentcheck/',
+                                    params:{order_num:this.order_num}
+                                }).then((response)=>{
+                                    if(response.data.msg == 'success'){
+                                        this.qr_payment_url = '/static/image/paysuccess.png';
+                                        clearInterval(checkpayment);
+                                        setTimeout(()=>{
+                                            if(this.learn_type == 'type_it'){
+                                                this.get_it();
+                                            }
+                                            else if(this.learn_type == 'type_knowledge') {
+                                                this.get_kl();
+                                            }
+                                            this.payshow = false;
+                                        },3000);
+                                    }
+                                });
+                                if(!this.payshow){
+                                    clearInterval(checkpayment);
+                                }
+                            },1000);
+                        }
+                    });
+                }else{
+                    this.login_open();
+                }
+
+            },
+            view:function(index){
+                if(this.learn_type == 'type_it') {
+                    var lrid = this.itresourcedata[index].lrid;
+                }
+                else {
+                    var lrid = this.klresourcedata[index].lrid;
+                }
+                axios({
+                    method: 'get',
+                    url:'/learn/api/detail/',
+                    params:{lrid:lrid}
+                }).then((response)=>{
+                    this.viewshow = true;
+                    this.contentlist = response.data.contentlist;
+                });
+            },
+            /*IT*/
+            get_it:function(){
+                axios({
+                    method: 'post',
+                    url: '/learn/api/itcourselist/',
+                    data: {
+                        learn_type: this.learn_type,
+                        key1_1:this.key1_1,
+                        key1_2:this.key1_2,
+                        key1_3:this.key1_3,
+                        it_current:this.itcurrent,
+                        sel_ittags:this.sel_ittags,
+                    }
+                }).then((response)=>{
+                    this.itresourcecolnums = response.data.itresourcecolnums;
+                    this.itresourcedata = response.data.itresourcedata;
+                    this.itresourcecount = response.data.itresourcecount;
+                });
+            },
+            it_search:function(){
+                this.itcurrent = 1;
+                this.get_it();
+            },
+            ittags_change:function(){
+                if(this.sel_ittags.length > 4){
+                    this.sel_ittags.pop();
+                    this.$Message['info']({
+                        background: true,
+                        content: '最多可选四个标签'
+                    });
+                }
+            },
+            it_page_change:function(page){
+                this.itcurrent = page;
+                this.get_it();
+            },
+            /*kownledge*/
+            get_kl:function(){
+                axios({
+                    method: 'post',
+                    url: '/learn/api/knowledge/',
+                    data: {
+                        learn_type: this.learn_type,
+                        key2_1:this.key2_1,
+                        key2_2:this.key2_2,
+                        key2_3:this.key2_3,
+                        kl_current:this.klcurrent,
+                        sel_kltags:this.sel_kltags,
+                    }
+                }).then((response)=>{
+                    this.klresourcecolnums = response.data.klresourcecolnums;
+                    this.klresourcedata = response.data.klresourcedata;
+                    this.klresourcecount = response.data.klresourcecount;
+                });
+            },
+            kl_search:function(){
+                this.klcurrent = 1;
+                this.get_kl();
+            },
+            kltags_change:function(){
+                if(this.sel_kltags.length > 4){
+                    this.sel_kltags.pop();
+                    this.$Message['info']({
+                        background: true,
+                        content: '最多可选四个标签'
+                    });
+                }
+            },
+            kl_page_change:function(page){
+                this.klcurrent = page;
+                this.get_kl();
+            },
+            /*book*/
+            get_book:function(){
+                axios({
+                    method: 'post',
+                    url: '/learn/api/freebooks',
+                    data: {
+                        key3_1:this.key3_1,
+                        key3_2:this.key3_2,
+                        key3_3:this.key3_3,
+                        book_current:this.bookcurrent,
+                        sel_booktags:this.sel_booktags,
+                    }
+                }).then((response)=>{
+                    this.bookresourcecolnums = response.data.bookresourcecolnums;
+                    this.bookresourcedata = response.data.bookresourcedata;
+                    this.bookresourcecount = response.data.bookresourcecount;
+                });
+            },
+            book_search:function(){
+                this.bookcurrent = 1;
+                this.get_book();
+            },
+            booktags_change:function(){
+                if(this.sel_booktags.length > 4){
+                    this.sel_booktags.pop();
+                    this.$Message['info']({
+                        background: true,
+                        content: '最多可选四个标签'
+                    });
+                }
+            },
+            book_page_change:function(page){
+                this.bookcurrent = page;
+                this.get_book();
+            },
+            /*my*/
+            get_my:function(){
+                axios({
+                    method: 'get',
+                    url: '/learn/api/my/',
+                }).then((response)=>{
+                    this.myresourcecolnums = response.data.myresourcecolnums;
+                    this.myresourcedata = response.data.myresourcedata;
+                    this.myresourcecount = response.data.myresourcecount;
+                });
+            },
+            my_page_change:function(page){
+                this.mycurrent = page;
+                this.get_my();
+            },
+        },
+        created:function () {
+            this.tag_init();
+            this.get_it();
+        },
+        mounted(){
+
+        },
+    });
+</script>
+</html>

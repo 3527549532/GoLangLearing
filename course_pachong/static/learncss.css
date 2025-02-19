@@ -1,0 +1,150 @@
+* {
+    margin: 0;
+    padding: 0;
+}
+ul,ol {
+    list-style: none;
+}
+body{
+    background-color: #F0F0F0;
+}
+
+button.sitebutton {
+    border:none;
+    background:none;
+    outline: none;
+    cursor: pointer;
+}
+
+.head{
+    background-color: #FFF;
+    width: 96%;
+    margin: 5px auto 0 auto;
+}
+
+.head .logo{
+    margin-left: 10px;
+}
+
+.head h1{
+    height: 60px;
+    line-height: 60px;
+    display: inline-block;
+}
+
+.head h2{
+    height: 50px;
+    line-height: 50px;
+    display: inline-block;
+}
+
+.head .wx{
+    float:left;
+    padding-top: 14px;
+    position: relative;
+}
+
+.head .wx button img{
+    width: 32px;
+    height: 32px;
+    float:left;
+}
+
+.content {
+    background-color: #FFF;
+    width: 96%;
+    margin: 5px auto 0 auto;
+}
+
+.content .search {
+    background-color: #FFF;
+    width: 96%;
+    margin: 5px auto 0 auto;
+}
+
+.content .search .lab {
+    height: 30px;
+    line-height: 30px;
+}
+.content .search .scol{
+    padding: 0 5px;
+}
+
+.content .result {
+
+}
+
+.content .freetitle {
+    color: #2d8cf0;
+    text-align: center;
+}
+
+.content .afterlogin{
+    margin: 5px 10px;
+}
+
+
+/*弹出框 登录二维码*/
+div.wxhead .info {
+    font-size: 18px;
+    width: 80%;
+    margin: 0 auto;
+    text-align: center;
+}
+
+div.wxhead .gzh img {
+    width: 248px;
+    height: 248px;
+    margin: 0 auto;
+    display: block;
+}
+div.wxhead .logincountdown {
+    color: #00A600;
+    font-size: 14px;
+    width: 80%;
+    margin: 0 auto;
+    text-align: center;
+}
+/*弹出框 网盘详情*/
+div.detail{
+    height: 400px;
+    overflow:auto;
+}
+
+/*弹出框 支付二维码*/
+div.payment .info {
+    font-size: 18px;
+    width: 80%;
+    margin: 0 auto;
+    text-align: center;
+}
+
+div.payment .qrpay {
+}
+
+div.payment .paycountdownmsg {
+    color: #00A600;
+    font-size: 14px;
+    width: 80%;
+    margin: 0 auto;
+    text-align: center;
+}
+
+div.payment .paytip {
+    color:#4F4F4F;
+    font-size: 12px;
+    width: 80%;
+    margin: 0 auto;
+    text-align: center;
+}
+
+div.payment .qrpay img {
+    width: 248px;
+    height: 248px;
+    margin: 0 auto;
+    display: block;
+}
+
+.textred {
+    color: #FF0000;
+}
